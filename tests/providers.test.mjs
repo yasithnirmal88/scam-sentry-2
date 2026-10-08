@@ -33,9 +33,9 @@ function recorder(responder) {
   return { ctx, calls };
 }
 
-test('provider contract: 14 providers, ids match filenames', async () => {
+test('provider contract: 19 providers, ids match filenames', async () => {
   const specs = await listProviders();
-  assert.equal(specs.length, 14);
+  assert.equal(specs.length, 19);
   const ids = specs.map((entry) => entry.spec.id);
   assert.equal(new Set(ids).size, ids.length, 'ids must be unique');
   for (const { file, spec } of specs) {

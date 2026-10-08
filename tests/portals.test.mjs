@@ -66,7 +66,7 @@ test('verify-portals static reports missing providers', async () => {
 test('check-providers: real provider dir is clean', async () => {
   const report = await checkProviders({});
   assert.equal(report.ok, true, report.problems.join('\n'));
-  assert.equal(report.files, 14);
+  assert.equal(report.files, 19);
 });
 
 test('violationsForSource catches direct fetch and _http imports', () => {

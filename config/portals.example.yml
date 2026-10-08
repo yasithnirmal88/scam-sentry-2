@@ -65,6 +65,27 @@ entries:
     integration: themuse
     source: themuse
 
+  - name: Arbeitnow
+    integration: arbeitnow
+    source: arbeitnow
+
+  - name: WeWorkRemotely
+    integration: weworkremotely
+    source: weworkremotely
+
+  - name: Work at a Startup
+    integration: workatastartup
+    source: workatastartup
+
+  - name: Himalayas
+    integration: himalayas
+    source: himalayas
+
+  - name: Beehired
+    integration: beehired
+    source: beehired
+    company: <company>
+
   - name: iCIMS jobs board
     integration: icims
     source: icims
