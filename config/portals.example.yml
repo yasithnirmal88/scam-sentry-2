@@ -1,0 +1,87 @@
+# Example portals configuration for the scanner.
+#
+# Copy this file to <data>/portals.yml and edit it, or point the scanners at it
+# by setting SCAM_SENTRY_PORTALS=<abs path> or passing --portals <abs path>.
+#
+# Entries can:
+#   - set "integration" to a provider id (see providers/ADDING_A_PROVIDER.md)
+#   - set "url" and let scanner pick the provider by host/keyword
+#   - set both; integration wins.
+#
+# Each posting fetched from this entry is deduplicated against data/scan-history.tsv,
+# filtered by the entry's filters block, and written as a Queued addition.
+
+entries:
+  - name: Greenhouse boards
+    integration: greenhouse
+    source: greenhouse
+    key: <company-slug>
+    filters:
+      title_blacklist: []
+      location_blacklist: []
+
+  - name: Lever
+    integration: lever
+    source: lever
+    key: <company-slug>
+
+  - name: Ashby
+    integration: ashby
+    source: ashby
+    key: <company-slug>
+
+  - name: RemoteOK
+    integration: remoteok
+    source: remoteok
+
+  - name: Remotive
+    integration: remotive
+    source: remotive
+
+  - name: Working Nomads
+    integration: workingnomads
+    source: workingnomads
+
+  - name: Jobspresso
+    integration: jobspresso
+    source: jobspresso
+
+  - name: Recruit CRM
+    integration: recruitcrm
+    source: recruitcrm
+    key: <client-key>
+
+  - name: SmartRecruiters
+    integration: smartrecruiters
+    source: smartrecruiters
+    key: <company>
+
+  - name: Workable
+    integration: workable
+    source: workable
+    key: <company-slug>
+
+  - name: Muse
+    integration: themuse
+    source: themuse
+
+  - name: iCIMS jobs board
+    integration: icims
+    source: icims
+    url: https://<company>.icims.com/jobs
+    filters:
+      title_blacklist:
+        - intern
+      location_blacklist: []
+
+  # Workday boards are tree-structured pages; the JSON endpoint behind them is
+  # per-instance. Point the URL at a myworkdayjobs.com page.
+  - name: Workday board
+    integration: workday
+    source: workday
+    url: https://<company>.myworkdayjobs.com/<board>
+
+  - name: Jobvite board
+    integration: jobvite
+    source: jobvite
+    url: https://jobs.<company>.jobvite.com

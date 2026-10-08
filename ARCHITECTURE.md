@@ -22,18 +22,18 @@
       │
       ▼
  root scripts (doctor, test-all, update-system, tracker, merge-tracker,
-   set-status, reserve-report-num, verify-pipeline, ...) ──► deterministic code
+   set-status, reserve-report-num, scan, verify-pipeline, ...) ──► deterministic code
  lib/  (states, tracker, paths, files, entry)  ──► shared plumbing
  templates/states.yml                          ──► canonical tracker states
+ providers/_http.mjs, _ip-guard.mjs, _dns-cache.mjs  ──► guarded transport
+ providers/_registry.mjs + one .mjs per board  ──► the scanner
  scripts/check-syntax.mjs     ──► repo-wide lint
+ scripts/check-providers.mjs  ──► provider contract lint
  tests/                       ──► the safety net
 ```
 
 Planned components, in build order:
 
-- **Scanner** (`scan.mjs` + `providers/`): zero-token discovery over public,
-  no-auth sources behind an SSRF-guarded HTTP transport with host allowlists
-  and `redirect: 'error'`.
 - **Analysis** (`modes/` evaluation workflow): risk indicators, legitimacy
   tiers, and a normative report structure, with deterministic validators that
   catch drift in model output.
@@ -47,6 +47,21 @@ Built so far:
   transitions with an audit log (`data/status-log.tsv`), report-number
   reservations, deduplication by normalized identity, and a 14-check health
   gate (`verify-pipeline.mjs`).
+- **Scanner** (`scan.mjs` + `providers/`): zero-token discovery over public,
+  no-auth boards. Every request goes through `providers/_http.mjs`, which
+  never follows redirects (`redirect: 'error'` only; `manual` solely to read
+  a `Location`), retries only timeouts/aborts/DNS failures with jittered
+  backoff and `Retry-After` handling, and resolves + inspects every host
+  against `providers/_ip-guard.mjs` (blocks private/loopback/link-local/
+  metadata ranges before a socket is opened). `providers/_dns-cache.mjs`
+  caps repeated lookups process-wide. Providers stay dumb: they receive a
+  `ctx` with guarded `fetchJson/fetchText/fetchResponse` and never call
+  global `fetch`; `scripts/check-providers.mjs` enforces this contract.
+  `scan.mjs` reads `config/portals.example.yml` (or `<data>/portals.yml`),
+  resolves each entry to a provider, filters and dedups against
+  `data/scan-history.tsv`, writes Queued additions into `data/additions/`,
+  and records every run in `data/scan-runs.tsv`. `validate-portals.mjs`
+  and `verify-portals.mjs [--live]` keep portal configs healthy.
 
 ## The judgment/code split
 
@@ -55,7 +70,8 @@ anything. Anything that must be exact, secure, reproducible, or free is code:
 
 | Concern | Where it lives |
 |---|---|
-| Fetching, allowlists, redirect policy, address guards | `providers/` (later phases) |
+| Fetching, allowlists, redirect policy, address guards | `providers/` (`_http.mjs`, `_ip-guard.mjs`, `_dns-cache.mjs`) |
+| Provider routing, scan-to-additions handoff | `providers/_registry.mjs`, `scan.mjs`, `validate-portals.mjs`, `verify-portals.mjs` |
 | Tracker writes, merge, dedup, status validation | root tracker scripts (`merge-tracker.mjs`, `set-status.mjs`, ...) |
 | Output validation that catches model drift | validator scripts (later phases) |
 | NLP-style heuristics (tokenize, similarity, extraction) | deterministic scripts, never a model call |
@@ -92,5 +108,9 @@ anything. Anything that must be exact, secure, reproducible, or free is code:
   (`onboardingNeeded`, `missing`, `unpersonalized`, `warnings`).
 - `node verify-pipeline.mjs --fix` — 14 numbered checks over states, the
   tracker, additions, the status log, and reports; exits non-zero on any error.
+- `npm run check:providers` — every provider meets the contract and no
+  provider calls global `fetch` (`scripts/check-providers.mjs`).
+- `node validate-portals.mjs` — every portal entry is well-formed and
+  routable to a provider.
 - No secrets in the repo; no `.env`; configuration secrets come from
   environment variables only.

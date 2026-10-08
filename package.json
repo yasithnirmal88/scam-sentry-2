@@ -11,7 +11,12 @@
   "scripts": {
     "lint": "node scripts/check-syntax.mjs",
     "test": "node test-all.mjs",
-    "doctor": "node doctor.mjs"
+    "doctor": "node doctor.mjs",
+    "check:providers": "node scripts/check-providers.mjs",
+    "scan": "node scan.mjs",
+    "scan:dry": "node scan.mjs --dry-run",
+    "validate:portals": "node validate-portals.mjs",
+    "verify:portals": "node verify-portals.mjs"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import yaml from 'js-yaml';
 import { renderFindings, STATUS_LOG_HEADER } from '../lib/tracker.mjs';
 
 export function tempRoot(prefix = 'ss-fix-') {
@@ -76,4 +77,29 @@ export function writeReservations(root, rows) {
 
 export function envFor(root) {
   return { SCAM_SENTRY_ROOT: root };
+}
+
+export function writePortals(root, entries, name = 'portals.yml') {
+  const file = path.join(root, name);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, yaml.dump({ entries }), 'utf8');
+  return file;
+}
+
+export function writeScanHistory(root, rows) {
+  const file = path.join(root, 'data', 'scan-history.tsv');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const header = 'date\turl\ttitle\tstatus\tsource';
+  const lines = rows.map((row) => [row.date, row.url, row.title, row.status, row.source].join('\t'));
+  fs.writeFileSync(file, [header, ...lines, ''].join('\n'), 'utf8');
+  return file;
+}
+
+export function writeScanRuns(root, rows) {
+  const file = path.join(root, 'data', 'scan-runs.tsv');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const header = 'timestamp\tsource\tentries\tpostings\tadded\tskipped';
+  const lines = rows.map((row) => [row.timestamp, row.source, row.entries, row.postings, row.added, row.skipped].join('\t'));
+  fs.writeFileSync(file, [header, ...lines, ''].join('\n'), 'utf8');
+  return file;
 }

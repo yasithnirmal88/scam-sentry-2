@@ -10,6 +10,8 @@ Phase 1 (foundation) is in place: lint, test harness, path resolution,
 onboarding doctor, updater scaffold.
 Phase 2 (tracker) is in place: canonical states, Markdown findings tracker,
 TSV merge, status transitions with a numbered health gate.
+Phase 3 (scanner) is in place: guarded HTTP transport, SSRF/IP-guard, DNS
+cache, a 14-provider registry, portals config with a hand-off scan command.
 
 ## Principles
 
@@ -63,6 +65,10 @@ node doctor.mjs                                    # should come back clean
 | `node dedup-tracker.mjs [--dry-run] [--json]` | remove rows that are duplicates by normalized identity |
 | `node fix-report-links.mjs [--dry-run] [--json]` | rewrite report links to tracker-relative paths, warn on missing files |
 | `node verify-pipeline.mjs [--json] [--summary] [--fix]` | 14 numbered health checks over states, tracker, logs, and reports |
+| `node scan.mjs [--dry-run] [--json] [--limit <n>] [--source <s>]` | scan portals into Queued additions + `scan-history`/`scan-runs` |
+| `node validate-portals.mjs [--json]` | check portal entries are well-formed and routable to a provider |
+| `node verify-portals.mjs [--json] [--live]` | static portal checks; `--live` probes each endpoint through the guard |
+| `npm run check:providers` | `scripts/check-providers.mjs` — provider contract + no raw-`fetch` lint |
 
 ## Layout
 
@@ -72,13 +78,14 @@ README.md  DATA_CONTRACT.md  ARCHITECTURE.md
 data/      tracker (findings.md), additions, status log (your data)
 reports/   one Markdown analysis per reviewed posting (your data)
 modes/     agent workflows (shipped templates + your personalization)
-config/    profile (example shipped, yours is user data)
+config/    profile (example shipped, yours is user data), portals.example.yml
 lib/       shared modules (states, tracker, paths, file walking, entry guard)
 templates/ shared templates (states.yml, mode scaffolds)
-providers/ board scanner registry (coming in the scanner phase)
-scripts/   repo-wide tooling (syntax lint)
+providers/ board scanner registry: _http transport, _ip-guard, _dns-cache,
+           _registry, ADDING_A_PROVIDER.md, and one .mjs per board
+scripts/   repo-wide tooling (syntax lint, provider contract lint)
 tests/     every suite lives here and is auto-discovered
-*.mjs      root scripts: doctor, tracker, merge-tracker, verify-pipeline, ...
+*.mjs      root scripts: doctor, tracker, merge-tracker, scan, verify-pipeline, ...
 ```
 
 ## Analysis report (coming in the evaluation phase)
