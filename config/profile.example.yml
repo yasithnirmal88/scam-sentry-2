@@ -1,0 +1,9 @@
+# Example analysis profile — copy to config/profile.yml and personalize it.
+
+language:
+  output: en
+
+analysis:
+  regions: []
+  focus: []
+  severity_floor: medium
