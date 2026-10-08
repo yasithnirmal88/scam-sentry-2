@@ -8,6 +8,8 @@ Nothing is ever submitted, sent, or reported anywhere on your behalf.
 **Status:** under construction, built one phase at a time.
 Phase 1 (foundation) is in place: lint, test harness, path resolution,
 onboarding doctor, updater scaffold.
+Phase 2 (tracker) is in place: canonical states, Markdown findings tracker,
+TSV merge, status transitions with a numbered health gate.
 
 ## Principles
 
@@ -53,21 +55,30 @@ node doctor.mjs                                    # should come back clean
 | `npm test` | `test-all.mjs` — glob-discovers `tests/**/*.test.mjs` and runs all suites |
 | `node doctor.mjs [--json] [--init-templates] [--root <dir>]` | onboarding status and template bootstrap |
 | `node update-system.mjs check [--json]` | update probe (source not configured yet) |
+| `node tracker.mjs [--json] [--status <s>] [--risk <r>] [--find <q>] [--limit <n>] [--init]` | read/query the findings tracker |
+| `node merge-tracker.mjs [--dry-run] [--json] [--migrate] [--backfill-urls]` | merge `data/additions/*.tsv` into the tracker, then archive them |
+| `node set-status.mjs <num\|substring> <State> [--note <text>] [--source <src>] [--dry-run] [--json]` | transition one row's status (logs to `data/status-log.tsv`) |
+| `node reserve-report-num.mjs [--count <n>] [--release <label>] [--json]` | reserve report numbers so reports and rows never collide |
+| `node normalize-statuses.mjs [--dry-run] [--json]` | canonicalize status cells and log every rewrite |
+| `node dedup-tracker.mjs [--dry-run] [--json]` | remove rows that are duplicates by normalized identity |
+| `node fix-report-links.mjs [--dry-run] [--json]` | rewrite report links to tracker-relative paths, warn on missing files |
+| `node verify-pipeline.mjs [--json] [--summary] [--fix]` | 14 numbered health checks over states, tracker, logs, and reports |
 
 ## Layout
 
 ```
 AGENTS.md  CLAUDE.md  OPENCODE.md   instructions the AI agents read
 README.md  DATA_CONTRACT.md  ARCHITECTURE.md
-modes/      agent workflows (shipped templates + your personalization)
-config/     profile (example shipped, yours is user data)
-lib/        shared modules (paths, file walking, entry guard)
-providers/  board scanner registry (coming in the scanner phase)
-scripts/    repo-wide tooling (syntax lint)
-tests/      every suite lives here and is auto-discovered
-data/       findings tracker and scan state (your data)
-reports/    one Markdown analysis per reviewed posting (your data)
-*.mjs       root scripts: doctor, test-all, update-system, ...
+data/      tracker (findings.md), additions, status log (your data)
+reports/   one Markdown analysis per reviewed posting (your data)
+modes/     agent workflows (shipped templates + your personalization)
+config/    profile (example shipped, yours is user data)
+lib/       shared modules (states, tracker, paths, file walking, entry guard)
+templates/ shared templates (states.yml, mode scaffolds)
+providers/ board scanner registry (coming in the scanner phase)
+scripts/   repo-wide tooling (syntax lint)
+tests/     every suite lives here and is auto-discovered
+*.mjs      root scripts: doctor, tracker, merge-tracker, verify-pipeline, ...
 ```
 
 ## Analysis report (coming in the evaluation phase)

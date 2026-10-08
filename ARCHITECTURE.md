@@ -21,8 +21,10 @@
  modes/ workflow files ──► judgment: classification, scoring, report drafting
       │
       ▼
- root scripts (doctor, update-system, test-all) ──► deterministic checks
- lib/  (paths, files, entry)  ──► shared plumbing
+ root scripts (doctor, test-all, update-system, tracker, merge-tracker,
+   set-status, reserve-report-num, verify-pipeline, ...) ──► deterministic code
+ lib/  (states, tracker, paths, files, entry)  ──► shared plumbing
+ templates/states.yml                          ──► canonical tracker states
  scripts/check-syntax.mjs     ──► repo-wide lint
  tests/                       ──► the safety net
 ```
@@ -35,10 +37,16 @@ Planned components, in build order:
 - **Analysis** (`modes/` evaluation workflow): risk indicators, legitimacy
   tiers, and a normative report structure, with deterministic validators that
   catch drift in model output.
-- **Findings tracker** (`data/findings.md`): canonical states, TSV merge,
-  deduplication, and a numbered health gate.
 - **Liveness**: never analyze a dead posting; only explicit closure evidence
   counts as closed.
+
+Built so far:
+
+- **Findings tracker** (`data/findings.md`): canonical states
+  (`templates/states.yml`), TSV merge from `data/additions/`, status
+  transitions with an audit log (`data/status-log.tsv`), report-number
+  reservations, deduplication by normalized identity, and a 14-check health
+  gate (`verify-pipeline.mjs`).
 
 ## The judgment/code split
 
@@ -48,7 +56,7 @@ anything. Anything that must be exact, secure, reproducible, or free is code:
 | Concern | Where it lives |
 |---|---|
 | Fetching, allowlists, redirect policy, address guards | `providers/` (later phases) |
-| Tracker writes, merge, dedup, status validation | tracker scripts (later phases) |
+| Tracker writes, merge, dedup, status validation | root tracker scripts (`merge-tracker.mjs`, `set-status.mjs`, ...) |
 | Output validation that catches model drift | validator scripts (later phases) |
 | NLP-style heuristics (tokenize, similarity, extraction) | deterministic scripts, never a model call |
 | Tests and CI | `tests/` + `npm run lint` |
@@ -82,5 +90,7 @@ anything. Anything that must be exact, secure, reproducible, or free is code:
 - `npm test` — every suite under `tests/` passes.
 - `node doctor.mjs --json` — reports the onboarding contract
   (`onboardingNeeded`, `missing`, `unpersonalized`, `warnings`).
+- `node verify-pipeline.mjs --fix` — 14 numbered checks over states, the
+  tracker, additions, the status log, and reports; exits non-zero on any error.
 - No secrets in the repo; no `.env`; configuration secrets come from
   environment variables only.

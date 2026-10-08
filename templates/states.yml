@@ -1,0 +1,55 @@
+# Canonical states — source of truth for the findings tracker.
+# Writers, validators, and reports all resolve status cells through this file.
+# A status cell holds exactly one canonical value; aliases are accepted on
+# write and normalized to the canonical spelling.
+
+states:
+  - name: Queued
+    terminal: false
+    requires_report: false
+    dashboard_group: queued
+    aliases: [pending, enqueued]
+
+  - name: Analyzed
+    terminal: false
+    requires_report: true
+    dashboard_group: analyzed
+    aliases: [analizado, reviewed]
+
+  - name: Followup
+    terminal: false
+    requires_report: true
+    dashboard_group: followup
+    aliases: [follow-up, investigate]
+
+  - name: Confirmed
+    terminal: true
+    requires_report: true
+    dashboard_group: confirmed
+    aliases: [confirmado, confirmed-fraud]
+
+  - name: Cleared
+    terminal: true
+    requires_report: true
+    dashboard_group: cleared
+    aliases: [legit, false-positive]
+
+  - name: Discarded
+    terminal: true
+    requires_report: false
+    dashboard_group: discarded
+    aliases: [descartado, ignored]
+
+  - name: Archived
+    terminal: true
+    requires_report: false
+    dashboard_group: archived
+    aliases: [stale, dead]
+
+risk_levels: [Low, Medium, High, Critical]
+
+confidence_levels: [High, Medium, Low]
+
+cell_sentinels: ["—", "-", "N/A", "n/a"]
+
+dashboard_groups: [queued, analyzed, followup, confirmed, cleared, discarded, archived]
