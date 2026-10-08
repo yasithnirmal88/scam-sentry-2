@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import yaml from 'js-yaml';
 import { isMainModule } from './lib/entry.mjs';
 import { resolveDataRoot, resolveTrackerRead } from './lib/paths.mjs';
 import { loadStates, resolveState, isSentinel, resolveEnum } from './lib/states.mjs';
 import { walkFiles } from './lib/files.mjs';
+import { providerFiles } from './providers/_registry.mjs';
+import { resolvePortalsFile } from './scan.mjs';
+import { checkReport as checkRiskReport } from './verify-risk.mjs';
+import { checkReportArchive } from './check-jd-archive.mjs';
 import {
   parseFindings,
   parseAddition,
@@ -349,6 +354,71 @@ export function runChecks(opts = {}) {
       });
       add(14, 'status log schema', messages.length ? 'error' : 'ok', messages);
     }
+  }
+
+  // 15 - portals entries resolve to a provider
+  {
+    const messages = [];
+    try {
+      const portalsFile = resolvePortalsFile(env);
+      const available = new Set(providerFiles().map((file) => path.basename(file).replace(/\.mjs$/, '')));
+      const doc = yaml.load(fs.readFileSync(portalsFile, 'utf8'));
+      const entries = Array.isArray(doc?.entries) ? doc.entries : [];
+      for (const entry of entries) {
+        if (entry?.integration && !available.has(entry.integration)) {
+          messages.push(`entry "${entry.name}": unknown provider claim "${entry.integration}"`);
+        }
+      }
+    } catch (error) {
+      messages.push(error.message);
+    }
+    add(15, 'portals entries resolve to a provider', messages.length ? 'error' : 'ok', messages);
+  }
+
+  // 16 - invisible control bytes in tracker cells
+  {
+    const messages = [];
+    const missing = skipTracker('tracker not initialized');
+    if (missing) messages.push(missing);
+    else {
+      for (const row of wellFormed) {
+        for (const [key, value] of Object.entries(row)) {
+          if (key.startsWith('_') || key === 'raw' || key === 'cells' || typeof value !== 'string') continue;
+          const bad = [...value].filter((ch) => {
+            const code = ch.codePointAt(0);
+            return (code < 0x20 && ch !== '\t' && ch !== '\n' && ch !== '\r') || code === 0x7f;
+          });
+          if (bad.length) messages.push(`row ${row.num}: invisible control byte in ${key} cell`);
+        }
+      }
+    }
+    add(16, 'invisible control bytes in tracker cells', missing ? 'ok' : messages.length ? 'error' : 'ok', messages);
+  }
+
+  // 17 - JD archive coverage on reports
+  {
+    const messages = [];
+    const files = fs.existsSync(reportsDir) ? walkFiles(reportsDir, { ext: '.md' }) : [];
+    for (const file of files) {
+      const text = fs.readFileSync(file, 'utf8');
+      const result = checkReportArchive(text, {
+        jdsDir: fs.existsSync(path.join(dataRoot, 'jds')) ? path.join(dataRoot, 'jds') : '',
+      });
+      if (!result.ok) for (const message of result.problems) messages.push(`${path.basename(file)}: ${message}`);
+    }
+    add(17, 'JD archive coverage', messages.length ? 'error' : 'ok', messages);
+  }
+
+  // 18 - risk-assessment-layer consistency
+  {
+    const messages = [];
+    const files = fs.existsSync(reportsDir) ? walkFiles(reportsDir, { ext: '.md' }) : [];
+    for (const file of files) {
+      const text = fs.readFileSync(file, 'utf8');
+      const result = checkRiskReport(text);
+      if (result.hard.length) messages.push(`${path.basename(file)}: ${result.hard.join('; ')}`);
+    }
+    add(18, 'risk-assessment-layer consistency', messages.length ? 'error' : 'ok', messages);
   }
 
   return checks;

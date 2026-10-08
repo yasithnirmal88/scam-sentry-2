@@ -16,7 +16,10 @@
     "scan": "node scan.mjs",
     "scan:dry": "node scan.mjs --dry-run",
     "validate:portals": "node validate-portals.mjs",
-    "verify:portals": "node verify-portals.mjs"
+    "verify:portals": "node verify-portals.mjs",
+    "evaluate": "node evaluate.mjs",
+    "verify:risk": "node verify-risk.mjs",
+    "check:jd": "node check-jd-archive.mjs"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

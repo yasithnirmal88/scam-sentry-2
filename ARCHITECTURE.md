@@ -106,8 +106,15 @@ anything. Anything that must be exact, secure, reproducible, or free is code:
 - `npm test` — every suite under `tests/` passes.
 - `node doctor.mjs --json` — reports the onboarding contract
   (`onboardingNeeded`, `missing`, `unpersonalized`, `warnings`).
-- `node verify-pipeline.mjs --fix` — 14 numbered checks over states, the
-  tracker, additions, the status log, and reports; exits non-zero on any error.
+- `node verify-pipeline.mjs --fix` — 18 numbered checks over states, the
+  tracker, additions, the status log, portals, and reports; exits non-zero on
+  any error (checks 17–18 drive JD-archive coverage and risk-layer
+  consistency through `check-jd-archive.mjs` / `verify-risk.mjs`).
+- `node verify-risk.mjs` — risk-layer validator over `reports/`: machine
+  summaries, risk-level/indicator contradictions, legitimacy-tier drift,
+  normative section order, and verdict-language discipline.
+- `node check-jd-archive.mjs` — every report archives the job description
+  verbatim or references a `jds/` capture that exists.
 - `npm run check:providers` — every provider meets the contract and no
   provider calls global `fetch` (`scripts/check-providers.mjs`).
 - `node validate-portals.mjs` — every portal entry is well-formed and

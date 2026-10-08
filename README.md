@@ -67,10 +67,13 @@ node doctor.mjs                                    # should come back clean
 | `node normalize-statuses.mjs [--dry-run] [--json]` | canonicalize status cells and log every rewrite |
 | `node dedup-tracker.mjs [--dry-run] [--json]` | remove rows that are duplicates by normalized identity |
 | `node fix-report-links.mjs [--dry-run] [--json]` | rewrite report links to tracker-relative paths, warn on missing files |
-| `node verify-pipeline.mjs [--json] [--summary] [--fix]` | 14 numbered health checks over states, tracker, logs, and reports |
+| `node verify-pipeline.mjs [--json] [--summary] [--fix]` | 18 numbered health checks over states, tracker, logs, portals, and reports |
 | `node scan.mjs [--dry-run] [--json] [--limit <n>] [--source <s>]` | scan portals into Queued additions + `scan-history`/`scan-runs` |
 | `node validate-portals.mjs [--json]` | check portal entries are well-formed and routable to a provider |
 | `node verify-portals.mjs [--json] [--live]` | static portal checks; `--live` probes each endpoint through the guard |
+| `node evaluate.mjs <num\|substring> [--indicators C1,H2,M3] [--final-decision Apply\|Consider\|Research first\|Skip] [--next-action <text>] [--dry-run] [--json]` | scaffold a risk-assessment report for a tracker row |
+| `node verify-risk.mjs [--json] [--summary]` | inspect the risk layer: machine summaries, level/indicator consistency, section order, signal language |
+| `node check-jd-archive.mjs [--json] [--summary]` | every report must archive the job description verbatim or reference a `jds/` capture |
 | `npm run check:providers` | `scripts/check-providers.mjs` — provider contract + no raw-`fetch` lint |
 
 ## Layout
@@ -80,7 +83,8 @@ AGENTS.md  CLAUDE.md  OPENCODE.md   instructions the AI agents read
 README.md  DATA_CONTRACT.md  ARCHITECTURE.md
 data/      tracker (findings.md), additions, status log (your data)
 reports/   one Markdown analysis per reviewed posting (your data)
-modes/     agent workflows (shipped templates + your personalization)
+            each report ends in a machine-readable risk assessment
+modes/     agent workflows (_shared conventions, evaluation, shipped templates)
 config/    profile (example shipped, yours is user data), portals.example.yml
 lib/       shared modules (states, tracker, paths, file walking, entry guard)
 templates/ shared templates (states.yml, mode scaffolds)
@@ -91,12 +95,26 @@ tests/     every suite lives here and is auto-discovered
 *.mjs      root scripts: doctor, tracker, merge-tracker, scan, verify-pipeline, ...
 ```
 
-## Analysis report (coming in the evaluation phase)
+## Analysis report
 
 One Markdown report per posting, ending in a **risk assessment**: a level
 (🟢 Low / 🟡 Medium / 🔴 High / 🚨 Critical), multi-label categories, a
 confidence band, and severity-graded indicators — always phrased as signals,
 never as a verdict about any party.
+
+Each report opens with a machine-readable `machine-summary` YAML block (risk
+level, legitimacy tier, confidence, categories, indicator codes, final
+decision) that `verify-risk.mjs` checks for enum drift, logical
+contradictions, section order, and verdict language.
+
+Evaluation workflow:
+
+1. `node evaluate.mjs <row|title> --indicators <codes> --final-decision <d>`
+2. Fill in the prose sections.
+3. `node verify-risk.mjs` and `node check-jd-archive.mjs` must pass.
+4. `node set-status.mjs <row> Analyzed`.
+
+See `modes/evaluate.md` for the full procedure.
 
 ## License
 

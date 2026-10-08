@@ -41,7 +41,7 @@ test('a fresh root passes every check', () => {
     assert.strictEqual(payload.ok, true);
     assert.strictEqual(payload.errors, 0);
     assert.strictEqual(payload.warnings, 0);
-    assert.strictEqual(payload.checks.length, 14);
+    assert.strictEqual(payload.checks.length, 18);
     for (const check of payload.checks) assert.strictEqual(check.level, 'ok', JSON.stringify(check));
   } finally {
     rmSync(root);
@@ -200,7 +200,7 @@ test('check 9 flags duplicate report numbers', () => {
 test('check 10 warns on orphan reports', () => {
   const root = tempRoot();
   try {
-    writeReport(root, '001-unreferenced.md');
+    writeReport(root, '001-unreferenced.md', goodReport);
     writeTracker(root, [baseRow()]);
     const { res, payload } = verify(root);
     assert.strictEqual(res.code, 0);
@@ -226,7 +226,7 @@ test('check 11 errors on empty source cells', () => {
 test('check 11 warns when the report disagrees with the tracker source', () => {
   const root = tempRoot();
   try {
-    writeReport(root, '001-note.md', '## Analysis\n\n**Source:** indeed\n');
+    writeReport(root, '001-note.md', goodReport.replace('**Source:** greenhouse', '**Source:** indeed'));
     writeTracker(root, [
       baseRow({ status: 'Analyzed', report: '[1](../reports/001-note.md)' }),
     ]);
@@ -290,6 +290,131 @@ test('--summary prints a machine-readable line', () => {
     const res = run(NODE, [SCRIPT, '--summary'], { env: envFor(root) });
     assert.strictEqual(res.code, 0, formatRunFailure(res, 'verify-pipeline --summary'));
     assert.match(res.stdout, /^checks=\d+ ok=\d+ warn=\d+ error=0$/m);
+  } finally {
+    rmSync(root);
+  }
+});
+
+const goodReport = `# Analysis: ACME — Senior Engineer
+
+**Date:** 2026-10-08
+**Legitimacy:** High Confidence
+**Risk:** Low
+**Confidence:** High
+**Tracker:** [#1](../data/findings.md)
+**URL:** https://jobs.example.com/posting/1
+**Source:** greenhouse
+
+<!-- machine-summary -->
+\`\`\`yaml
+company: ACME
+role: Senior Engineer
+legitimacy_tier: High Confidence
+risk_level: Low
+confidence: High
+categories: [Likely Genuine]
+indicators: []
+final_decision: Consider
+next_action: ""
+hard_stops: []
+soft_gaps: []
+\`\`\`
+<!-- /machine-summary -->
+
+## A) Posting Facts
+
+| Field | Value |
+|---|---|
+| Title | Senior Engineer |
+
+## G) Posting Legitimacy
+
+Signals are presented as evidence with legitimate explanations.
+
+## Risk Assessment
+
+**Level:** Low
+**Categories:** Likely Genuine
+**Confidence:** High
+
+## Employer Verification
+
+## Recommended Actions
+
+1.
+
+## Risk Summary
+
+## Score Evidence
+
+## Job Description (archived verbatim)
+
+> Full JD pasted here verbatim.
+`;
+
+test('check 15 errors on an unknown provider claim in portals', () => {
+  const root = tempRoot();
+  try {
+    writeTracker(root, [baseRow()]);
+    const file = path.join(root, 'portals.yml');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, 'entries:\n  - name: Ghost\n    integration: ghostboard\n', 'utf8');
+    const { res, payload } = verify(root);
+    assert.strictEqual(res.code, 1);
+    assert.strictEqual(level(payload, 15), 'error');
+  } finally {
+    rmSync(root);
+  }
+});
+
+test('check 16 errors on invisible control bytes in tracker cells', () => {
+  const root = tempRoot();
+  try {
+    writeTrackerRaw(root, `${headerRow}\n${dividerRow}\n| 1 | 2026-10-08 | T\x01itle | green | C | L | https://x.example/1 | - | - | Queued | - | n |\n`);
+    const { res, payload } = verify(root);
+    assert.strictEqual(res.code, 1);
+    assert.strictEqual(level(payload, 16), 'error');
+  } finally {
+    rmSync(root);
+  }
+});
+
+test('check 17 errors on a report without an archived JD', () => {
+  const root = tempRoot();
+  try {
+    writeReport(root, '001-note.md', '## Analysis\n\nNo JD here.\n');
+    const { res, payload } = verify(root);
+    assert.strictEqual(res.code, 1);
+    assert.strictEqual(level(payload, 17), 'error');
+  } finally {
+    rmSync(root);
+  }
+});
+
+test('check 18 errors on a contradictory risk layer', () => {
+  const root = tempRoot();
+  try {
+    writeReport(
+      root,
+      '001-note.md',
+      goodReport.replace('risk_level: Low', 'risk_level: Low').replace('legitimacy_tier: High Confidence', 'legitimacy_tier: Suspicious'),
+    );
+    const { res, payload } = verify(root);
+    assert.strictEqual(res.code, 1);
+    assert.strictEqual(level(payload, 18), 'error');
+  } finally {
+    rmSync(root);
+  }
+});
+
+test('checks 17 and 18 pass for a well-formed report', () => {
+  const root = tempRoot();
+  try {
+    writeReport(root, '001-good.md', goodReport);
+    const { res, payload } = verify(root);
+    assert.strictEqual(res.code, 0, formatRunFailure(res, 'verify-pipeline well-formed report'));
+    assert.strictEqual(level(payload, 17), 'ok');
+    assert.strictEqual(level(payload, 18), 'ok');
   } finally {
     rmSync(root);
   }
