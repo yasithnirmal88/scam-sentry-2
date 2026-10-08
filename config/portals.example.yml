@@ -81,6 +81,22 @@ entries:
     integration: himalayas
     source: himalayas
 
+  - name: Jobicy
+    integration: jobicy
+    source: jobicy
+
+  - name: RemoteJobs
+    integration: remotejobs
+    source: remotejobs
+
+  - name: Nomado24
+    integration: nomado24
+    source: nomado24
+
+  - name: FreeHire
+    integration: freehire
+    source: freehire
+
   - name: Beehired
     integration: beehired
     source: beehired

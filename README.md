@@ -11,7 +11,10 @@ onboarding doctor, updater scaffold.
 Phase 2 (tracker) is in place: canonical states, Markdown findings tracker,
 TSV merge, status transitions with a numbered health gate.
 Phase 3 (scanner) is in place: guarded HTTP transport, SSRF/IP-guard, DNS
-cache, a 19-provider registry, portals config with a hand-off scan command.
+cache, a 23-provider registry, portals config with a hand-off scan command.
+Phase 4 (provider growth) is underway: no-auth board integrations added in
+batches (arbeitnow, weworkremotely, workatastartup, himalayas, beehired,
+jobicy, remotejobs, nomado24, freehire).
 
 ## Principles
 
